@@ -34,8 +34,7 @@ $ npm start
 
 ## Notice
 
-* Maybe you need to config the mongodb's params in **routes/config.js** if you changed mongodb's default connection.
-* All **delete** operation are **double left click**.
+APIs are edited by [api-document](https://github.com/yalishizhude/api-document)server.
 
 ## Docs
 
