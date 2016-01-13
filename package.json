@@ -6,7 +6,7 @@
   "author": "yalishizhude",
   "license": "MIT",
   "scripts": {
-    "start": "nodemon ./bin/www"
+    "start": "node ./bin/www"
   },
   "dependencies": {
     "body-parser": "~1.13.2",
