@@ -4,11 +4,19 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var session = require('express-session');
 
 var routes = require('./routes/index');
 
 var app = express();
-
+app.use(session({
+  genid: function(){
+    return (new Date()).getTime();
+  }, 
+  resave: false,
+  saveUninitialized: true,
+  secret: 'api-mock-server'
+}));-
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');

@@ -10,13 +10,28 @@
 	var fs = require('fs');
 
 	var cInt = db.get('interfaces');
-	cInt.find({}, function(err, data){
+	cInt.find({},{$ne:{valide:false}}, function(err, data){
+		if(err) throw err;
+		console.log('------', 'load interfaces start...');
+		var cnt = 0;
 		data.forEach(function(it){
-			router[it.method](it.url, function(req, res){
-				console.log(it.url,it.outObject);
-				res.json(Mock.mock(JSON.parse(it.outObject)));
-			});
+			if(it.method){
+				cnt++;
+				console.log(it.url,it.method,it.outObject);
+				router[it.method](it.url, function(req, res){
+					console.log(new Date(), req.path, it.outObject);
+					try{
+						req.session.ifcs = req.session.ifcs||[];
+						var data = Mock.mock(JSON.parse(it.outObject));
+						req.session.ifcs.push(req.path);
+						res.json(data);
+					} catch(e){
+						res.json(e);
+					}
+				});
+			}
 		});
+		console.log('------', 'loaded '+cnt+' interfaces~');
 	});
 	//通过重写文件引发服务器重启，从而重新加载接口
 	router.all('/rewrite/:timestamp', function(req, res){
