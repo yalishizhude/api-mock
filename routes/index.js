@@ -17,9 +17,9 @@
 		data.forEach(function(it){
 			if(it.method){
 				cnt++;
-				console.log(it.url,it.method,it.outObject);
+				console.log(it.url,it.method);
 				router[it.method](it.url, function(req, res){
-					console.log(new Date(), req.path, it.outObject);
+					console.log(new Date(), req.path);
 					try{
 						req.session.ifcs = req.session.ifcs||[];
 						var data = Mock.mock(JSON.parse(it.outObject));
