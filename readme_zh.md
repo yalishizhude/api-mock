@@ -8,12 +8,11 @@
 2. [Node.js](https://nodejs.org)也需要提前安装。
 3. 安装项目
 ```
-$ git clone https://github.com/yalishizhude/api-document.git
+$ git clone https://github.com/yalishizhude/api-mock.git
 ```
 4. 安装依赖
 ```
 $ npm install
-$ bower install
 ```
 
 ## 快速开始
