@@ -12,7 +12,7 @@ var app = express();
 app.use(session({
   genid: function(){
     return (new Date()).getTime();
-  }, 
+  },
   resave: false,
   saveUninitialized: true,
   secret: 'api-mock-server'

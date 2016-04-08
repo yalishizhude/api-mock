@@ -1,55 +1,83 @@
 /*global module,require*/
-(function () {
-  'use strict';
-  var express = require('express'),
-    router = express.Router(),
-    Mock = require('mockjs'),
-    monk = require('monk'),
-    db = monk('localhost:27017/api'),
-    fs = require('fs'),
-    cInt = db.get('interfaces');
-  //通过重写文件引发服务器重启，从而重新加载接口
-  router.all('/rewrite/:timestamp', function (req, res) {
-    fs.writeFile('./routes/timestamp.js', req.params.timestamp, 'utf8', function (err) {
-      if (err) {
-        throw err;
-      }
-    });
-    res.json({});
-  }).get('/', function (req, res) {
-    res.render('index', {
-      title: 'api-mock-server'
-    });
-  }).all('*', function (req, res) {
-    cInt.find({}, {
-      $ne: {
-        valide: false
-      }
-    }, function (err, data) {
-      if (err) {
-        throw err;
-      }
-      console.log('------', 'load interfaces start...');
-      var cnt = 0;
-      data.forEach(function (it) {
-        if (it.method) {
-          cnt++;
+var express = require('express');
+var router = express.Router();
+var Validator = require('schema-validator');
+var Mock = require('mockjs');
+var monk = require('monk');
+var request = require('superagent');
+var _ = require('underscore');
+var mock = require('superagent-mocker')(request);
+var db = monk('localhost:27017/api');
+var fs = require('fs');
+var cInt = db.get('interfaces');
+mock.timeout = 5;
+
+function loadInterface(callback) {
+  var routerObj = {};
+  mock.clearRoutes();
+  cInt.find({}, {
+    $ne: {
+      valide: false
+    },
+    sort: {
+      url: -1
+    }
+  }, function (err, data) {
+    if (err) throw err;
+    console.log('------', 'load interfaces start...');
+    var cnt = 0;
+    data.forEach(function (it) {
+      var method = 'delete' === it.method ? 'del' : it.method;
+      var path = it.url.split('?')[0];
+      if (it.method && it.url) {
+        if (!routerObj[path]) {
           console.log(it.url, it.method);
-          router[it.method](it.url, function (req, res) {
-            console.log(new Date(), req.path);
-            try {
-              req.session.ifcs = req.session.ifcs || [];
-              var obj = Mock.mock(JSON.parse(it.outObject));
-              req.session.ifcs.push(req.path);
-              res.json(obj);
-            } catch (e) {
-              res.json(e);
-            }
+          routerObj[path] = [it];
+          mock[method](path, function (req) {
+            var result = {};
+            routerObj[req.url].forEach(function (ifc) {
+              try {
+                // var inObject = ifc.inObject ? Mock.mock(JSON.parse(ifc.inObject || '')) : {};
+                var inSchema = ifc.inSchema ? JSON.parse(ifc.inSchema) : {};
+                var outObject = Mock.mock(JSON.parse(ifc.outObject));
+                var validate = new Validator(inSchema);
+                var check = validate.check(req.body);
+                if(_.isEmpty(result) || result._error){
+                  result = check._error ? check : outObject;
+                }
+              } catch (e) {
+                console.error('接口出错', e);
+              }
+            });
+            return result;
           });
+        } else {
+          routerObj[path].push(it);
         }
-      });
-      console.log('------', 'loaded ' + cnt + ' interfaces~');
+        cnt++;
+      }
     });
+    console.log('------', 'loaded ' + cnt + ' interfaces~');
+    if (callback) callback();
   });
-  module.exports = router;
-}());
+}
+router.all('/rewrite/*', function (req, res) {
+  loadInterface(function () {
+    res.send('重启 mock服务器 成功!');
+  });
+}).get('', function (req, res) {
+  res.render('index', {
+    title: 'api-mock-server'
+  });
+}).all('*', function (req, res) {
+  //send request to superagent-mock
+  request[req.method.toLowerCase()](req.path).send(req.body).send(req.query).end(function (err, data) {
+    if (err) {
+      res.status(500).json(err);
+    } else {
+      res.json(data);
+    }
+  });
+});
+loadInterface();
+module.exports = router;
