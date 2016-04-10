@@ -18,6 +18,10 @@
     "mockjs": "^0.1.10",
     "monk": "^1.0.1",
     "morgan": "~1.6.1",
-    "serve-favicon": "~2.3.0"
+    "schema-validator": "git+https://github.com/yalishizhude/Validator.git",
+    "serve-favicon": "~2.3.0",
+    "superagent": "^1.8.3",
+    "superagent-mocker": "git+https://github.com/yalishizhude/superagent-mocker.git",
+    "underscore": "^1.8.3"
   }
 }
