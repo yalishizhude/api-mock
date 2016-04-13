@@ -1,7 +1,7 @@
 /*global module,require*/
 var express = require('express');
 var router = express.Router();
-var Validator = require('schema-validator');
+var jsen = require('jsen');
 var Mock = require('mockjs');
 var monk = require('monk');
 var request = require('superagent');
@@ -37,13 +37,12 @@ function loadInterface(callback) {
             var result = {};
             routerObj[req.url].forEach(function (ifc) {
               try {
-                // var inObject = ifc.inObject ? Mock.mock(JSON.parse(ifc.inObject || '')) : {};
                 var inSchema = ifc.inSchema ? JSON.parse(ifc.inSchema) : {};
                 var outObject = Mock.mock(JSON.parse(ifc.outObject));
-                var validate = new Validator(inSchema);
-                var check = validate.check(req.body);
-                if(_.isEmpty(result) || result._error){
-                  result = check._error ? check : outObject;
+                var validate = jsen(inSchema);
+                var check = validate(req.body);
+                if (_.isEmpty(result) || !result) {
+                  result = check ? outObject : validate.errors;
                 }
               } catch (e) {
                 console.error('接口出错', e);
