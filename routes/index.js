@@ -10,54 +10,54 @@ var mock = require('superagent-mocker')(request);
 var db = monk('localhost:27017/api');
 var fs = require('fs');
 var cInt = db.get('interfaces');
-mock.timeout = 5;
+var routerObj = {};
 
 function loadInterface(callback) {
-  var routerObj = {};
+  routerObj = {};
   mock.clearRoutes();
   cInt.find({}, {
     $ne: {
       valide: false
     },
     sort: {
-      url: -1
+      url: 1
     }
   }, function (err, data) {
     if (err) throw err;
     console.log('------', 'load interfaces start...');
-    var cnt = 0;
     data.forEach(function (it) {
-      var method = 'delete' === it.method ? 'del' : it.method;
       var path = it.url.split('?')[0];
-      if (it.method && it.url) {
-        if (!routerObj[path]) {
-          console.log(it.url, it.method);
-          routerObj[path] = [it];
-          mock[method](path, function (req) {
-            var result = {};
-            routerObj[req.url].forEach(function (ifc) {
-              try {
-                var inSchema = ifc.inSchema ? JSON.parse(ifc.inSchema) : {};
-                var outObject = Mock.mock(JSON.parse(ifc.outObject));
-                var validate = jsen(inSchema);
-                var check = validate(req.body);
-                if (_.isEmpty(result) || !result) {
-                  result = check ? outObject : validate.errors;
-                }
-              } catch (e) {
-                console.error('接口出错', e);
-              }
-            });
-            return result;
-          });
-        } else {
-          routerObj[path].push(it);
+      var method = 'delete' === it.method ? 'del' : it.method;
+      var key =  path + ' ' + method;
+      routerObj[key] = routerObj[key] || [];
+      routerObj[key].push(it);
+      console.log(path, method);
+    });
+    for (var key in routerObj) {
+      _registerRouter(key.split(' ')[0], key.split(' ')[1], routerObj[key]);
+    }
+    console.log('------', 'loaded ' + _.keys(routerObj).length + ' interfaces~');
+    if (callback) callback();
+  });
+}
+
+function _registerRouter(path, method, interfaceList) {
+  mock[method](path, function (req) {
+    var result = {};
+    interfaceList.forEach(function (ifc) {
+      try {
+        var inSchema = ifc.inSchema ? JSON.parse(ifc.inSchema) : {};
+        var outObject = Mock.mock(JSON.parse(ifc.outObject));
+        var validate = jsen(inSchema);
+        var check = validate(req.body);
+        if (_.isEmpty(result) || !result) {
+          result = check ? outObject : validate.errors;
         }
-        cnt++;
+      } catch (e) {
+        console.error('接口出错', e);
       }
     });
-    console.log('------', 'loaded ' + cnt + ' interfaces~');
-    if (callback) callback();
+    return result;
   });
 }
 router.all('/rewrite/*', function (req, res) {
@@ -69,8 +69,8 @@ router.all('/rewrite/*', function (req, res) {
     title: 'api-mock-server'
   });
 }).all('*', function (req, res) {
-  //send request to superagent-mock
-  request[req.method.toLowerCase()](req.path).send(req.body).send(req.query).end(function (err, data) {
+  //send request to superagent-mock for rest api
+  request[req.method.toLowerCase()](req.path).send(_.extend(req.body,req.query)).end(function (err, data) {
     if (err) {
       res.status(500).json(err);
     } else {

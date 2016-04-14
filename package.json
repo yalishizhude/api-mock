@@ -22,7 +22,7 @@
     "schema-validator": "git+https://github.com/yalishizhude/Validator.git",
     "serve-favicon": "~2.3.0",
     "superagent": "^1.8.3",
-    "superagent-mocker": "^0.3.0",
+    "superagent-mocker": "git+https://github.com/yalishizhude/superagent-mocker.git",
     "underscore": "^1.8.3"
   }
 }
