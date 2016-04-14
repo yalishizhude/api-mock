@@ -50,7 +50,7 @@ function _registerRouter(path, method, interfaceList) {
         var outObject = Mock.mock(JSON.parse(ifc.outObject));
         var validate = jsen(inSchema);
         var check = validate(req.body);
-        if (_.isEmpty(result) || !result) {
+        if (_.isEmpty(result) || check) {
           result = check ? outObject : validate.errors;
         }
       } catch (e) {
