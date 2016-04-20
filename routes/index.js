@@ -43,25 +43,26 @@ function loadInterface(callback) {
 }
 
 function _registerRouter(path, method, interfaceList) {
-  if(!method) return;
-  mock[method](path, function (req) {
-    var result = {};
-    interfaceList.forEach(function (ifc) {
-      try {
-        var inSchema = ifc.inSchema ? JSON.parse(ifc.inSchema) : {};
-        var outObject = Mock.mock(JSON.parse(ifc.outObject));
-        var validate = jsen(inSchema);
-        var check = validate(req.body);
-        if (_.isEmpty(result) || check) {
-          result = check ? outObject : validate.errors;
-          result.name = ifc.name;
+  if(['get', 'put', 'post', 'delete'].indexOf(method)>-1) {
+    mock[method](path, function (req) {
+      var result = {};
+      interfaceList.forEach(function (ifc) {
+        try {
+          var inSchema = ifc.inSchema ? JSON.parse(ifc.inSchema) : {};
+          var outObject = Mock.mock(JSON.parse(ifc.outObject));
+          var validate = jsen(inSchema);
+          var check = validate(req.body);
+          if (_.isEmpty(result) || check) {
+            result = check ? outObject : validate.errors;
+            result.name = ifc.name;
+          }
+        } catch (e) {
+          console.error('接口出错', e);
         }
-      } catch (e) {
-        console.error('接口出错', e);
-      }
+      });
+      return result;
     });
-    return result;
-  });
+  }
 }
 router.all('/rewrite/*', function (req, res) {
   loadInterface(function () {
