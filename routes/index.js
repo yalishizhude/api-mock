@@ -43,6 +43,7 @@ function loadInterface(callback) {
 }
 
 function _registerRouter(path, method, interfaceList) {
+  if(!method) return;
   mock[method](path, function (req) {
     var result = {};
     interfaceList.forEach(function (ifc) {
