@@ -1,6 +1,5 @@
 {
   "name": "api-mockjs-server",
-  "version": "1.0.0",
   "description": "responed mock data",
   "main": "bin/www",
   "author": "yalishizhude",
