@@ -34,7 +34,8 @@ $ npm start
 
 ## Notice
 
-APIs are edited by [api-document](https://github.com/yalishizhude/api-document)server.
+* APIs are edited by [api-document](https://github.com/yalishizhude/api-document) server.
+* Make sure mongodb is started.
 
 ## Docs
 
