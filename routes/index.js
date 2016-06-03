@@ -20,7 +20,8 @@ function loadInterface(callback) {
       valide: false
     },
     sort: {
-      url: 1
+      url: 1,
+      oid: -1
     }
   }, function (err, data) {
     if (err) throw err;
@@ -52,6 +53,7 @@ function _registerRouter(path, method, interfaceList) {
         var check = validate(req.body);
         if (_.isEmpty(result) || check) {
           result = check ? outObject : validate.errors;
+          result.name = ifc.name;
         }
       } catch (e) {
         console.error('接口出错', e);
@@ -74,6 +76,11 @@ router.all('/rewrite/*', function (req, res) {
     if (err) {
       res.status(500).json(err);
     } else {
+      if(data.name) {
+        res.set('name', encodeURI(data.name));
+        console.log(data.name);
+        delete data.name;
+      }
       res.json(data);
     }
   });
