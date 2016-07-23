@@ -46,6 +46,7 @@ function _registerRouter(path, method, interfaceList) {
   if(['get', 'put', 'post', 'delete'].indexOf(method)>-1) {
     mock[method](path, function (req) {
       var result = {};
+      var name = '';
       interfaceList.forEach(function (ifc) {
         try {
           var inSchema = ifc.inSchema ? JSON.parse(ifc.inSchema) : {};
@@ -54,13 +55,13 @@ function _registerRouter(path, method, interfaceList) {
           var check = validate(req.body);
           if (_.isEmpty(result) || check) {
             result = check ? outObject : validate.errors;
-            result.name = ifc.name;
+            name = ifc.name;
           }
         } catch (e) {
           console.error('接口出错', e);
         }
       });
-      return result;
+      return {result: result,name:name};
     });
   }
 }
@@ -76,14 +77,13 @@ router.all('/rewrite/*', function (req, res) {
   //send request to superagent-mock for rest api
   request[req.method.toLowerCase()](req.path).send(_.extend(req.body,req.query)).end(function (err, data) {
     if (err) {
+      console.error(err);
       res.status(500).json(err);
     } else {
       if(data.name) {
         res.set('name', encodeURI(data.name));
-        console.log(data.name);
-        delete data.name;
       }
-      res.json(data);
+      res.json(data.result);
     }
   });
 });
